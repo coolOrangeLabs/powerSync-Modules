@@ -6,12 +6,12 @@
 # Copyright (C) 2025 COOLORANGE S.r.l.                                         #
 #==============================================================================#
 
-# Function Gets all version sets within the project with the given projectID
+# Function Gets all version sets within the project with the given project
 # https://aps.autodesk.com/en/docs/acc/v1/reference/http/sheets-version-sets-GET/
-function Get-VersionSets($projectID){
+function Get-VersionSets($project){
     Write-Verbose "Getting version sets..."
     $parameters = @{
-        "Uri"     = "https://developer.api.autodesk.com/construction/sheets/v1/projects/$projectID/version-sets"
+        "Uri"     = "https://developer.api.autodesk.com/construction/sheets/v1/projects/$($project.ID)/version-sets"
         "Method"  = "Get"
         "Headers" = $ApsConnection.Headers
     }    
@@ -21,9 +21,9 @@ function Get-VersionSets($projectID){
 }
 
 # Function sets a version set by the given name in the project with the given project ID
-function Get-VersionSet($projectID, $name){
+function Get-VersionSet($project, $name){
    Write-Verbose "Getting version set '$name'"
-    $vSets = Get-VersionSets -projectID $projectID
+    $vSets = Get-VersionSets -project $project
     $ret = $vSets.results | Where-Object {$_.name -eq $name} | Select-Object -First 1
     if ($null -eq $ret){
         Write-Verbose "Could not find version set '$name...'"
@@ -225,15 +225,15 @@ function Get-Sheets($project){
 # Adds a local file to Sheets
 function Add-ToSheets($project, $versionSetName, $issuanceDate, $storageObjectName, $localFileName){
 
-    $projectID = $(($project.id -replace '^b\.', ''))
 
-    $versionSet = Get-VersionSet -projectID $projectID -name $versionSetName
+
+    $versionSet = Get-VersionSet -project $project -name $versionSetName
     if ($null -eq $versionSet){
-        $versionSet = Add-VersionSet -projectID $projectID -name $versionSetName -issuanceDate $issuanceDate #1
+        $versionSet = Add-VersionSet -project $project -name $versionSetName -issuanceDate $issuanceDate #1
     }
     $versionSetID = $versionSet.Id
 
-    $storageObject = Add-StorageObject -projectID $projectID -fileName $storageObjectName #2
+    $storageObject = Add-StorageObject -project $project -fileName $storageObjectName #2
     $keys = $storageObject.urn.substring(27).Split('/')
     $bucketKey = $keys[0]
     $objectKey = $keys[1]
@@ -247,7 +247,7 @@ function Add-ToSheets($project, $versionSetName, $issuanceDate, $storageObjectNa
     Get-UploadBucket -bucketKey $bucketKey -objectKey $objectKey -uploadKey $uploadKey | Out-Null #5
     $storageObjectNameArray = @($storageObjectName)
 
-    $postUploadsResponse = Publish-Uploads -versionSetID $versionSetID -projectID $projectID -urn $storageObject.urn -uploadedFileNames $storageObjectNameArray #6
+    $postUploadsResponse = Publish-Uploads -versionSetID $versionSetID -project $project -urn $storageObject.urn -uploadedFileNames $storageObjectNameArray #6
     $uploadID = $postUploadsResponse.Id 
     return $uploadID;
 }
@@ -255,8 +255,7 @@ function Add-ToSheets($project, $versionSetName, $issuanceDate, $storageObjectNa
 # Numbers sheets with the naming scheme "$prefix$separator$number" EX "prefix 'sheet' separator ' - ' gets "sheet - 1"
 function NumberSheetsNumerically($project, $uploadID, $prefix = "", $separator = " - "){
     $counter = 1
-    $projectID = $(($project.id -replace '^b\.', ''))
-    $uploads = Get-Uploads -projectID $projectID -uploadID $uploadID
+    $uploads = Get-Uploads -project $project -uploadID $uploadID
 
     $body = @()
     $uploads.results|
@@ -270,7 +269,7 @@ function NumberSheetsNumerically($project, $uploadID, $prefix = "", $separator =
 
     $jsonBody = ConvertTo-Json $body -Depth 100 -Compress
     $parameters = @{
-        "Uri"     = "https://developer.api.autodesk.com/construction/sheets/v1/projects/$projectID/uploads/$uploadID/review-sheets"
+        "Uri"     = "https://developer.api.autodesk.com/construction/sheets/v1/projects/$($project.ID)/uploads/$uploadID/review-sheets"
         "Method"  = "Patch"
         "Headers" = $ApsConnection.Headers
         "Body"    = $jsonBody
