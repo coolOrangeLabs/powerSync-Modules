@@ -250,9 +250,8 @@ function Add-ApsAccItemLocalAttachment($project, $item, $localPath, $fileName){
 # Downloads attachments of the given submittal to $exportPath
 function Save-ItemAttachments ($project, $item, $exportPath){
     Write-Verbose "Attempting to download attachments to item with ID $($item.ID) to $exportPath"
-    $projectID = $(($project.id -replace '^b\.', ''))
     $pathRet = [Array]@()
-    $attachments = (Get-ApsItemAttachments -projectID $projectID -itemID $item.id).results
+    $attachments = (Get-ApsItemAttachments -project $project -item $item.id).results
     $attachments | ForEach-Object {
         $keys = $_.uploadUrn.substring(27).Split('/')
         $bucketKey = $keys[0]
