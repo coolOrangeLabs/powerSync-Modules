@@ -148,7 +148,7 @@ function Get-ApsFileVersions($project, $file){
     Write-Verbose "Getting file versions for file with ID $($file.ID)..."
     
     $parameters = @{
-        "Uri" = "https://developer.api.autodesk.com/data/v1/projects/$(($project.id -replace '^b\.', ''))/items/$fileID/versions"
+        "Uri" = "https://developer.api.autodesk.com/data/v1/projects/$($project.id)/items/$fileID/versions"
         "Method" = "Get"
         "Headers" = $ApsConnection.Headers
     }
