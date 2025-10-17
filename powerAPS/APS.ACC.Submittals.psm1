@@ -231,7 +231,7 @@ function Add-ApsAccItemLocalAttachment($project, $item, $localPath, $fileName){
     Write-Verbose "Attempting to add local file as attachment"
     $projectID = ($project.id -replace '^b\.', '')
     $itemID = $item.ID
-    $attachment = Add-ApsAccItemAttachment -projectID $projectID -itemID $itemID -fileName $fileName
+    $attachment = Add-ApsAccItemAttachment -project $project -item $item -fileName $fileName
 
     $keys = $attachment.uploadUrn.substring(27).Split('/')
     $bucketKey = $keys[0]
@@ -243,7 +243,7 @@ function Add-ApsAccItemLocalAttachment($project, $item, $localPath, $fileName){
 
     Publish-ToUrl -url $url -filePath $localPath | Out-Null 
     Get-UploadBucket -bucketKey $bucketKey -objectKey $objectKey -uploadKey $uploadKey | Out-Null
-    $response = Update-ApsAccItemAttachment -projectID $projectId -itemID $itemID -attachmentID $attachment.Id
+    $response = Update-ApsAccItemAttachment -project $project -itemID $item -attachmentID $attachment.Id
     return $response;   
 }
 
